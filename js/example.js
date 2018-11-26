@@ -1,8 +1,3 @@
-/*
-*    main.js
-*    Mastering Data Visualization with D3.js
-*    Project 2 - Gapminder Clone
-*/
 
 var margin = { left:80, right:20, top:50, bottom:100 };
 var height = 500 - margin.top - margin.bottom,
@@ -103,8 +98,10 @@ function update(data) {
 
     // JOIN new data with old elements.
     var circles = g.selectAll("circle").data(data, function(d){
+      console.log(d.country);
         return d.country;
     });
+
 
     // EXIT old elements not present in new data.
     circles.exit()
