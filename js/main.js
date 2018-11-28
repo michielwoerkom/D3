@@ -1,6 +1,6 @@
-let time = 0;
-let moving = 0;
-
+let time =0;
+let moving = true;
+let formattedData = [];
 const margin = { left:80, right:20, top:50, bottom:100 };
 
 const width = 800 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
@@ -13,7 +13,39 @@ const g = d3.select("#chart-area")
       .attr("transform", "translate(" + margin.left +
         ", " + margin.top + ")");
 
+// Button
+const button = g.append("g")
+  .attr("class","button_group")
+  .append("rect")
+    .attr("width", 60)
+    .attr("height", 20)
+    .attr("y", height+30)
+    .attr("x", width-60)
+    .attr("fill", "grey");
+
+const button_text = g.selectAll(".button_group")
+  .append("text")
+    .attr("width", 60)
+    .attr("height", 20)
+    .attr("y", height+30+15)
+    .attr("x", width-30)
+    .attr("font-size", "14")
+    .attr("text-anchor", "middle")
+    .text("Pauze")
+    .attr("class","button")
+    .attr("fill", "white")
+    .on("click", d => {
+      pauze_play();
+    });
+
 // Labels
+const detail_label = g.append("text")
+  .attr("x", width)
+  .attr("y", 0)
+  .attr("font-size", "14px")
+  .attr("class", "detail_label")
+  .attr("text-anchor", "end");
+
 const xlabel = g.append("text")
   .attr("x", width/2)
   .attr("y", height + margin.top)
@@ -52,14 +84,26 @@ const yearLabel = g.append("text")
   const area = d3.scaleSqrt()
   .range([0, 40]);
 
-  const pauze =
+function handleMouseOver(d) {
+  detail_label.text(d.continent +", "+ d.country);
+}
+
+// Refresh
+function refresh() {
+  interval = d3.interval( (t) => {
+    time = (time < 214) ? time+1 : 0
+    update(formattedData[time]);
+  },100);
+  update(formattedData[0]);
+};
+
 //Get DATA
 d3.json("data/data.json").then(data => {
 	let le = [];
 	let pop = [];
 	let gdp = [];
 
-	let formattedData = data.map(year => {
+	formattedData = data.map(year => {
 			return year["countries"].filter(country => {
 					let dataExists = (country.income && country.life_exp);
 					return dataExists;
@@ -71,6 +115,7 @@ d3.json("data/data.json").then(data => {
 					gdp.push(country.income);
 					return country;
 			})
+
 	});
 
 	const maxLE = le.reduce((a,b) => Math.max(a,b));
@@ -97,15 +142,23 @@ d3.json("data/data.json").then(data => {
       .attr("class", "y axis")
       .call(yaxis);
 
-	// Refresh every sec
-
-	d3.interval( () => {
-    time = (time < 214) ? time+1 : 0
-    update(formattedData[time]);
-  },100);
-
-  update(formattedData[0]);
+  refresh();
 });
+
+function pauze_play(t) {
+  if (moving === true) {
+    interval.stop();
+    moving = false;
+    button_text.text("Play");
+    return;
+  }
+  else {
+    refresh();
+    moving = true;
+    button_text.text("Pauze");
+    return;
+  }
+}
 
 function update(data) {
 
@@ -125,6 +178,7 @@ function update(data) {
 		.append("circle")
       .attr("class", "enter")
       .attr("fill", d => continentColor(d.continent))
+      .on("mouseover", d => handleMouseOver(d))
       .merge(circles)
       .transition(t)
 			.attr("cy", d => y(d.life_exp))

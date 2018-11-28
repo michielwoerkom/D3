@@ -12,3 +12,9 @@
 	height: 60px;
 	padding: 5px 0px;
 }
+.detail_label {
+	text-transform: capitalize;
+}
+.button {
+	cursor: pointer;
+}
