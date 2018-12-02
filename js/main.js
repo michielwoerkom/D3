@@ -1,6 +1,6 @@
 let time =0;
 let moving = true;
-let formattedData = [];
+
 const margin = { left:80, right:20, top:50, bottom:100 };
 
 const width = 800 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
@@ -97,11 +97,13 @@ function refresh() {
   update(formattedData[0]);
 };
 
+
 //Get DATA
 d3.json("data/data.json").then(data => {
 	let le = [];
 	let pop = [];
 	let gdp = [];
+  let continents = new Set();
 
 	formattedData = data.map(year => {
 			return year["countries"].filter(country => {
@@ -113,10 +115,35 @@ d3.json("data/data.json").then(data => {
 					pop.push(country.population);
 					le.push(country.life_exp);
 					gdp.push(country.income);
+          continents.add(country.continent);
 					return country;
 			})
 
 	});
+
+  const legend = g.append("g")
+    .attr("transform", "translate("+ (width - 10) + "," + (height - 200) +")");
+
+  continents = Array.from(continents);
+  const colour_legend = continents.map((continent, i) => {
+
+    const legend_row = legend.append("g")
+      .attr("transform", "translate(0, "+ (i * 20) + ")")
+
+    legend_row.append("rect")
+      .attr("width", 10)
+      .attr("height",10)
+      .attr("fill",continentColor(continent))
+
+    legend_row.append("text")
+      .attr("x", -10)
+      .attr("y", 10)
+      .attr("text-anchor", "end")
+      .style("text-transform", "capitalize")
+      .text(continent);
+    return;
+  });
+
 
 	const maxLE = le.reduce((a,b) => Math.max(a,b));
 	const maxPOP = pop.reduce((a,b) => Math.max(a,b));
@@ -129,7 +156,7 @@ d3.json("data/data.json").then(data => {
 
   //Axis opbouwen
   const xaxis = d3.axisBottom(x)
-    .tickValues([400,4000,40000])
+    .tickValues([400, 4000, 40000])
     .tickFormat(d3.format(" $"));
     g.append("g")
       .attr("transform", "translate(0," + height +")")
@@ -143,9 +170,11 @@ d3.json("data/data.json").then(data => {
       .call(yaxis);
 
   refresh();
+
 });
 
-function pauze_play(t) {
+
+function pauze_play() {
   if (moving === true) {
     interval.stop();
     moving = false;
@@ -161,7 +190,6 @@ function pauze_play(t) {
 }
 
 function update(data) {
-
   const t = d3.transition()
     .duration(100);
 	//JOIN
